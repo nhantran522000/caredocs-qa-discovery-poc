@@ -1,4 +1,4 @@
-# CareDocs QA — Change-Detection & Test-Synthesis PoC
+# QA Discovery PoC — Change-Detection & Test-Synthesis
 
 A controlled proof-of-concept for the agentic QA loop:
 
@@ -12,14 +12,14 @@ It runs on the **Wolfpack platform** (Agent Incubator org, `agent-incubator` pro
 accessible "Bramblewood Care" app with a *known* set of changes between two versions, so we can
 score the agent's detection precision and recall instead of guessing.
 
-> Why a sample site and not the real CareDocs first: the real app is noisy and the cost of a
+> Why a sample site and not the real production app first: the real app is noisy and the cost of a
 > false positive is a human's time. Here the ground truth is fixed (`changeset-v2/CHANGES.md`),
 > so we can prove the loop end-to-end and measure it before pointing it at production.
 
 ## Live site
 
-- Live demo (v1): **https://nhantran522000.github.io/caredocs-qa-discovery-poc/**
-- Source of truth: https://github.com/wolf-logic/caredocs-qa-discovery-poc
+- Live demo (v1): **https://nhantran522000.github.io/qa-discovery-poc/**
+- Source of truth: https://github.com/wolf-logic/qa-discovery-poc
 - Pages serves the `docs/` directory on `main`. GitHub Pages is disabled org-wide on
   `wolf-logic`, so the live demo is hosted on a personal mirror (`deploy` remote); the
   wolf-logic repo remains source-of-truth. Both remotes are kept in sync on every push.
@@ -68,7 +68,7 @@ always means "last approved state".
 ### 0. Local sanity check (optional, no Wolfpack)
 ```bash
 cd tooling && npm install && npx playwright install chromium
-node snapshot.mjs --base-url https://nhantran522000.github.io/caredocs-qa-discovery-poc/ --routes ../routes.json --out ../snapshots
+node snapshot.mjs --base-url https://nhantran522000.github.io/qa-discovery-poc/ --routes ../routes.json --out ../snapshots
 ```
 Captures v1 aria + screenshots locally so you can eyeball the canonical format.
 
@@ -128,7 +128,7 @@ reads as "changed"). Folded into the skill's baseline-format + diffing rules.
 - [x] Sample site (v1) + v2 change-set + ground truth
 - [x] Snapshot tooling (local reference impl)
 - [x] Wolfpack skill + discovery task + approval/write-back task (paste-ready)
-- [x] Deployed to GitHub Pages — https://nhantran522000.github.io/caredocs-qa-discovery-poc/
+- [x] Deployed to GitHub Pages — https://nhantran522000.github.io/qa-discovery-poc/
 - [x] Local aria-diff verification — precision/recall 4/4, controls clean
 - [ ] Wolfpack baseline run (against live v1)
 - [ ] Inject v2 (`bash changeset-v2/apply-v2.sh && git push origin main && git push deploy main`)

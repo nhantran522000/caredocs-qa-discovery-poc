@@ -12,7 +12,7 @@ the `discover-and-synthesize-tests` skill (use get_skill; if it times out, retry
 with 5/10/20s backoff).
 
 Target app (deployed sample site):
-  base_url: https://nhantran522000.github.io/caredocs-qa-discovery-poc/
+  base_url: https://nhantran522000.github.io/qa-discovery-poc/
   project_slug: agent-incubator
   routes:
     - { path: index.html,        name: Login,        feature: authentication-access }

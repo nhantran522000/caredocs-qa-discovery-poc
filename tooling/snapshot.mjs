@@ -31,7 +31,7 @@ const routesPath = resolve(here, arg("routes", "../routes.json"));
 const outDir = resolve(here, arg("out", "../snapshots"));
 
 if (!baseUrl) {
-  console.error("ERROR: --base-url is required (e.g. https://nhantran522000.github.io/caredocs-qa-discovery-poc/)");
+  console.error("ERROR: --base-url is required (e.g. https://nhantran522000.github.io/qa-discovery-poc/)");
   process.exit(1);
 }
 
