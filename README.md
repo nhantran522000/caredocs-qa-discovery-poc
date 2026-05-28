@@ -18,8 +18,11 @@ score the agent's detection precision and recall instead of guessing.
 
 ## Live site
 
-- Baseline (v1): **<PAGES_URL>**
-- Pages serves the `docs/` directory on the `main` branch.
+- Live demo (v1): **https://nhantran522000.github.io/caredocs-qa-discovery-poc/**
+- Source of truth: https://github.com/wolf-logic/caredocs-qa-discovery-poc
+- Pages serves the `docs/` directory on `main`. GitHub Pages is disabled org-wide on
+  `wolf-logic`, so the live demo is hosted on a personal mirror (`deploy` remote); the
+  wolf-logic repo remains source-of-truth. Both remotes are kept in sync on every push.
 
 ## Layout
 
@@ -65,7 +68,7 @@ always means "last approved state".
 ### 0. Local sanity check (optional, no Wolfpack)
 ```bash
 cd tooling && npm install && npx playwright install chromium
-node snapshot.mjs --base-url <PAGES_URL> --routes ../routes.json --out ../snapshots
+node snapshot.mjs --base-url https://nhantran522000.github.io/caredocs-qa-discovery-poc/ --routes ../routes.json --out ../snapshots
 ```
 Captures v1 aria + screenshots locally so you can eyeball the canonical format.
 
@@ -107,6 +110,6 @@ Wait for Pages to redeploy (~1 min).
 - [x] Sample site (v1) + v2 change-set + ground truth
 - [x] Snapshot tooling (local reference impl)
 - [x] Wolfpack skill + discovery task + approval/write-back task (paste-ready)
-- [ ] Deployed to GitHub Pages — fill `<PAGES_URL>` above
+- [x] Deployed to GitHub Pages — https://nhantran522000.github.io/caredocs-qa-discovery-poc/
 - [ ] Wolfpack baseline run
 - [ ] Detection run + precision/recall scored
