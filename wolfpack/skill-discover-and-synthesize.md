@@ -52,47 +52,50 @@ target site.
   `New feature` or `Change detected`.
 - Library target (written later, by the approval task — NOT here): `test-scenario-library/<feature>`.
 
-## Behaviour
-For each route in `routes`:
+## Behaviour — ONE route per run (resumable)
+Process exactly ONE route per run, then STOP. Repeated scheduled runs walk through every
+route in turn, so a session never times out and a route that hits a timeout simply retries on
+the next run instead of being skipped/lost.
 
-1. Browse it: `browser_navigate` to `base_url + path`, then exactly ONE `browser_snapshot` to
-   get the current aria (YAML) tree. That snapshot IS the observation — do not click through,
-   mutate, or run any JavaScript (`run_code_unsafe`/`evaluate`) to inspect it further.
-2. Load the baseline: `get_wiki_page` for `qa-baselines/<slug>` in `project_slug`.
-   - If MCP times out, retry up to 3× with 5/10/20s backoff. If it still fails, skip this
-     route, note `transient-mcp-timeout` for it, and continue to the next route. Do NOT treat
-     a timeout as "no baseline".
-   - If the page genuinely does not exist (clean not-found, not a timeout) → this route is
-     **NEW**.
-3. Classify:
-   - **NEW** (no baseline page): the whole page is new surface area.
-   - **CHANGED** (baseline exists and differs semantically from the current aria): something
-     was added/removed/renamed. Ignore cosmetic-only differences (pure attribute noise);
-     focus on roles, accessible names, fields, links, headings, controls.
-   - **UNCHANGED** (aria matches semantically): do nothing, create no card.
-4. Dedup before creating: `list_work_items` (project_slug, search by the card title prefix
-   `[<feature>] `). If an OPEN card (status `new`/`doing`/`blocked`) already covers this
-   route, append a `create_work_item_comment` with the fresh diff instead of creating a
-   duplicate, and move on.
-5. For NEW or CHANGED with no open card, `create_work_item`:
-   - project_slug: the input project_slug
-   - title: `[<feature>] New feature: <name>` or `[<feature>] Change detected: <name>`
-   - status: `new`
-   - priority: 3 (High) for NEW, 2 (Medium) for CHANGED
-   - description (markdown):
-     - **What changed** — a plain-English semantic diff (e.g. "button `Submit` → `Sign In`",
-       "new read-only field `Date of birth`", "new nav link `Activity Log`", "new page").
-     - **Proposed Gherkin** — fenced ```gherkin``` scenarios. For a CHANGE, show the updated
-       step(s) and which existing scenario they belong to. For NEW, draft a full Feature with
-       2–4 scenarios covering the visible affordances (forms, filters, tables, primary actions).
-     - **Observed at** — the `base_url + path` and the run timestamp.
-     - **Candidate snapshot** — the FULL current aria YAML inside a fenced ```yaml``` block,
-       under a heading `## candidate-snapshot`. The approval task promotes this to the baseline
-       on approval, so it must be present and exact.
-6. Never promote the baseline here. Baseline promotion happens only after a human approves
-   (the approval task does it). This keeps the baseline meaning "last human-approved state".
-7. Final report: routes visited, NEW count, CHANGED count, UNCHANGED count, cards created,
-   cards commented, routes skipped for transient-mcp-timeout.
+1. Find the next route that needs work. Call `list_work_items` ONCE (project_slug, open
+   statuses `new`/`doing`/`blocked`) and note which routes already have a discovery card
+   (title starts `[<feature>] `). Walk `routes` IN ORDER and pick the FIRST route that does
+   NOT yet have an open card — routes that already have one are handled, so skip them WITHOUT
+   browsing (this is what makes runs resumable + idempotent). If EVERY route already has an
+   open card, STOP and report "all routes covered — nothing to do".
+2. Observe that ONE route: `browser_navigate` to `base_url + path`, then exactly ONE
+   `browser_snapshot` (no JS — see the Observation rules above).
+3. Load its baseline: `get_wiki_page` for `qa-baselines/<slug>`.
+   - On MCP timeout, retry 3× with 5/10/20s backoff. If it still times out, STOP and report
+     `transient-mcp-timeout` for this route — do NOT skip it; the next run retries it.
+   - Clean not-found → **NEW**. Exists and differs semantically → **CHANGED**. Matches → **UNCHANGED**.
+4. Act, then STOP (at most one card per run):
+   - **UNCHANGED** → create no card; report "<route> unchanged" and STOP (the next run takes
+     the next uncovered route).
+   - **NEW or CHANGED** → `create_work_item`, then STOP:
+     - project_slug: the input project_slug
+     - title: `[<feature>] New feature: <name>` or `[<feature>] Change detected: <name>`
+     - status: `new`; priority: 3 (High) for NEW, 2 (Medium) for CHANGED
+     - description (markdown):
+       - **What changed** — plain-English semantic diff (e.g. "button `Submit` → `Sign In`",
+         "new read-only field `Date of birth`", "new nav link `Activity Log`", "new page").
+       - **Proposed Gherkin** — fenced ```gherkin``` scenarios. For a CHANGE, show the updated
+         step(s) and which existing scenario they belong to. For NEW, draft a full Feature with
+         2–4 scenarios covering the visible affordances (forms, filters, tables, primary actions).
+       - **Observed at** — the `base_url + path` and the run timestamp.
+       - **Candidate snapshot** — the FULL current aria YAML inside a fenced ```yaml``` block
+         under a heading `## candidate-snapshot` (the approval task promotes this to the
+         baseline, so it must be present and exact).
+5. Never promote the baseline here — that happens only on human approval (the approval task),
+   which keeps the baseline meaning "last human-approved state".
+6. Final report: the ONE route you handled and its result (card id / "unchanged" /
+   `transient-mcp-timeout`), plus how many routes still have NO open card (the remaining
+   count) so progress is visible across runs.
+
+> Scale note: for a small known route list this one-per-run loop is enough. For hundreds of
+> pages, shard by storing a cursor in a `qa-discovery/progress` wiki page and processing a
+> bounded batch per run from the cursor; and seed the route list from a sitemap or a
+> link-crawl frontier rather than a hardcoded list.
 
 ## Security rules
 - Read-only on the target site. Never submit forms with real data, never attempt logins with

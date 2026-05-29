@@ -22,21 +22,25 @@ Target app (deployed sample site):
     - { path: residents.html,    name: Residents,    feature: residents-register }
     - { path: activity-log.html, name: Activity Log, feature: activity-log }
 
+The skill processes ONE route per run (the first route that has no open card yet), then stops.
+Repeated scheduled runs walk through every route until all are covered — so this task is meant
+to run on a schedule, not once.
+
 Notes:
-- The routes list above is the v2 set (includes activity-log.html). On the FIRST (baseline)
-  run, activity-log.html will not yet be deployed — if a route 404s, record it as
-  "not-deployed" and skip it; do not create a card for a route that does not load.
+- If a route 404s (e.g. activity-log.html before the v2 deploy), record it as "not-deployed"
+  and STOP without a card; the next run retries it.
 - Browse read-only: browser_navigate + browser_snapshot only. Never submit forms or log in.
-- Create at most one card per route. Leave new cards in `new` for human review.
+- Leave new cards in `new` for human review.
 - If a category is required by create_work_item, call list_categories(agent-incubator) and
   pick the most testing-related one; if none fits, create the card without a category.
 
-Report: routes visited, NEW / CHANGED / UNCHANGED counts, cards created, cards commented,
-routes skipped (timeout or not-deployed).
+Report: the ONE route you handled and its result (card id / "unchanged" / "not-deployed" /
+"transient-mcp-timeout"), and how many routes still have no open card (remaining count).
 ```
 
-**Scheduling:** off for the PoC runs (trigger manually: baseline run, then detection run after
-the v2 change-set is deployed). Enable → daily once it's proven.
+**Scheduling:** **ON → every ~10 minutes** so it steps through all routes automatically until
+each has a card. Once every route is covered the runs become no-ops ("all routes covered"),
+and the same loop then serves ongoing change-detection. (Slow it to hourly/daily once seeded.)
 
 **Disabled tools (recommended):** keep the **Playwright MCP**, **Wiki**, **Work items**,
 **Skills** (get_skill), **Organisation** (list_categories). Disable the rest.
