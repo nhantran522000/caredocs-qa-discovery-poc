@@ -22,6 +22,18 @@ test scenarios that the change implies. You create advisory work items only — 
 approves them before anything reaches the Test Scenario Library. Strictly read-only on the
 target site.
 
+## Observation method — CRITICAL, do this exactly
+- Capture each page with **ONE** `browser_snapshot` call. It returns the aria (YAML) tree —
+  the canonical, cheap observation, and all you need.
+- **NEVER use `browser_run_code_unsafe`, `browser_evaluate`, or ANY JavaScript execution** to
+  read or scrape the page. They are slow, burn the whole session budget, and have repeatedly
+  caused 30-minute timeouts and £2+ runaway runs. `browser_snapshot` already gives you the
+  full structure — JS adds nothing here.
+- Do not re-navigate or re-snapshot a route. Budget ≈ 3–4 tool calls per route:
+  `browser_navigate` → `browser_snapshot` → `get_wiki_page` → (optionally one
+  `create_work_item` / `create_work_item_comment`). If you feel the urge to run JS in a loop,
+  STOP — you already have the snapshot; move on to the diff.
+
 ## Inputs (the task prompt supplies these)
 - base_url: root URL of the deployed app (e.g. the GitHub Pages URL).
 - routes: list of { path, name, feature } to visit.
@@ -43,8 +55,9 @@ target site.
 ## Behaviour
 For each route in `routes`:
 
-1. Browse it: `browser_navigate` to `base_url + path`, then `browser_snapshot` to get the
-   current aria (YAML) tree. This is the observation — do not click through or mutate anything.
+1. Browse it: `browser_navigate` to `base_url + path`, then exactly ONE `browser_snapshot` to
+   get the current aria (YAML) tree. That snapshot IS the observation — do not click through,
+   mutate, or run any JavaScript (`run_code_unsafe`/`evaluate`) to inspect it further.
 2. Load the baseline: `get_wiki_page` for `qa-baselines/<slug>` in `project_slug`.
    - If MCP times out, retry up to 3× with 5/10/20s backoff. If it still fails, skip this
      route, note `transient-mcp-timeout` for it, and continue to the next route. Do NOT treat
@@ -83,8 +96,9 @@ For each route in `routes`:
 
 ## Security rules
 - Read-only on the target site. Never submit forms with real data, never attempt logins with
-  guessed credentials, never edit or POST. `browser_navigate` + `browser_snapshot` + read-only
-  `browser_*` inspection only.
+  guessed credentials, never edit or POST. Observe with `browser_navigate` + `browser_snapshot`
+  ONLY — NEVER `browser_run_code_unsafe` or `browser_evaluate` (they burn the session budget
+  and cause timeouts).
 - Touch only `qa-baselines/*` (read) and work items you create/own. Never edit
   `test-scenario-library/*` here — that is the approval task's job, post-human-approval.
 - `blocked` is for substantive failures only (page won't load, malformed app). NEVER mark a
