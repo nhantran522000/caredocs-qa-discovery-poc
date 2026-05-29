@@ -1,5 +1,17 @@
 # TASK — `Discover & Synthesize Tests` (v3 — inlined, minimal MCP)
 
+> **v3 RESULT (2026-05-30, did NOT fix it):** the verification run still ballooned to ~373K
+> tokens / 12m+ and was stopped before the 30-min cap, with no Dashboard card. Minimising the
+> MCP surface did not help — so the blow-ups are NOT only MCP hangs. Across the day the runs
+> were wildly variable (some completed at 12–120K tokens; many ran away to 200–540K and timed
+> out), which points to **environmental instability (MCP latency + browser egress) compounded
+> by model thrashing/context blow-up** in this specific container. After exhausting client-side
+> mitigations (Kimi model, resumable one-route loop, bail-fast, file:// serving, inlined prompt,
+> 2-call MCP surface) the loop still won't run reliably. **Conclusion: this is a platform/infra
+> issue, not a skill/task issue — needs investigation into why runs in this container hang on
+> MCP calls and balloon in tokens (the Caredocs pipeline tasks on this agent likely share it).**
+> Schedule left OFF. Core detection concept remains proven locally (4/4 precision/recall).
+
 **Why v3:** the loop kept hanging on slow Wolfpack MCP calls (`get_skill`, `get_wiki_page`,
 `list_categories`). v3 removes them:
 - **No `get_skill`** — the full instructions are inlined into the task Prompt below.
