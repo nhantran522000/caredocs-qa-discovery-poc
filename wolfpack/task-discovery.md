@@ -60,10 +60,21 @@ change-detection. (Slow it to hourly/daily once seeded.)
   `list_work_items` dedup correctly. The dedup `list_work_items` call still lacks an explicit
   retry/timeout guard (only `get_skill`/`get_wiki_page` have one) — harden if dups recur.
 - Container browser egress to the public site is flaky (`ERR_TUNNEL_CONNECTION_FAILED`) and
-  caused 30-min timeout spins. **Resolved (2026-05-29) by serving the site locally:** the skill
+  caused 30-min timeout spins. **Addressed (2026-05-29) by serving the site locally:** the skill
   git-clones the repo and browses `file:///tmp/qa-site/docs/` — local file access, no network,
   immune to the egress issue. (`git` egress works in the container even though the browser's
   does not.)
+- **REMAINING BLOCKER (platform, not client-side): Wolfpack MCP calls hang for minutes.**
+  `get_skill` / `get_wiki_page` / `list_work_items` intermittently stall (the fix#1 bail-fast
+  only catches *navigation* errors, not hung MCP calls). Runs sit at a fixed token count for
+  minutes and grind to the 30-min cap. This affected ~every scheduled run on 2026-05-29 and is
+  why the board never advanced past the Login cards. NOT fixable from the skill/task — needs
+  platform investigation into MCP latency in this container.
+  - Mitigation (v3, shrinks the hang surface): inline the skill body into the task prompt
+    (removes `get_skill`), and store baselines in the git repo instead of wiki pages (removes
+    `get_wiki_page`/`update_wiki_page`) — leaving only `list_work_items` + `create_work_item`.
+  - Schedule left OFF until the MCP-hang issue is resolved (an always-on loop just burns
+    timeouts).
 
 **Disabled tools (recommended):** keep **Bash** (for `git clone`), **Playwright MCP**, **Wiki**,
 **Work items**, **Skills** (get_skill), **Organisation** (list_categories). Disable the rest.
