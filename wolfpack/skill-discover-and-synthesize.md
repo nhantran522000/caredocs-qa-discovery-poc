@@ -57,6 +57,12 @@ Process exactly ONE route per run, then STOP. Repeated scheduled runs walk throu
 route in turn, so a session never times out and a route that hits a timeout simply retries on
 the next run instead of being skipped/lost.
 
+**Hard bail-fast rule (prevents 30-minute timeouts): NEVER spin on failure.** A whole run is
+only a handful of tool calls. If the target site is unreachable, or any step keeps failing,
+STOP and exit immediately with a one-line report — do NOT keep retrying toward the session
+time limit. A clean early exit is always correct; the next scheduled run retries. Total budget
+per run: a few minutes and well under ~10 tool calls. If you find yourself past that, STOP.
+
 1. Find the next route that needs work. Call `list_work_items` ONCE (project_slug, open
    statuses `new`/`doing`/`blocked`) and note which routes already have a discovery card
    (title starts `[<feature>] `). Walk `routes` IN ORDER and pick the FIRST route that does
@@ -65,6 +71,14 @@ the next run instead of being skipped/lost.
    open card, STOP and report "all routes covered — nothing to do".
 2. Observe that ONE route: `browser_navigate` to `base_url + path`, then exactly ONE
    `browser_snapshot` (no JS — see the Observation rules above).
+   - **If navigation fails** (`ERR_TUNNEL_CONNECTION_FAILED`, connection refused/reset, DNS,
+     or a load timeout): retry the navigate AT MOST 2× with a single 5s wait between tries.
+     If it STILL fails, **STOP the entire run immediately** and report
+     `site-unreachable: <error>` — do NOT keep retrying, do NOT try other routes, and do NOT
+     create or `blocked` any card. An unreachable site is transient/environmental; the next
+     scheduled run retries. **This is the rule that stops runs from grinding to the 30-minute cap.**
+   - A clean HTTP **404** on the page is different from unreachable → treat it as
+     `not-deployed` for that route, report it, and STOP (the next run retries).
 3. Load its baseline: `get_wiki_page` for `qa-baselines/<slug>`.
    - On MCP timeout, retry 3× with 5/10/20s backoff. If it still times out, STOP and report
      `transient-mcp-timeout` for this route — do NOT skip it; the next run retries it.
@@ -89,8 +103,8 @@ the next run instead of being skipped/lost.
 5. Never promote the baseline here — that happens only on human approval (the approval task),
    which keeps the baseline meaning "last human-approved state".
 6. Final report: the ONE route you handled and its result (card id / "unchanged" /
-   `transient-mcp-timeout`), plus how many routes still have NO open card (the remaining
-   count) so progress is visible across runs.
+   `transient-mcp-timeout` / `site-unreachable` / `not-deployed`), plus how many routes still
+   have NO open card (the remaining count) so progress is visible across runs.
 
 > Scale note: for a small known route list this one-per-run loop is enough. For hundreds of
 > pages, shard by storing a cursor in a `qa-discovery/progress` wiki page and processing a
