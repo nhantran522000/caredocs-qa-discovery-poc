@@ -7,12 +7,14 @@ on:
       - 'tests/**'
       - 'docs/**'
       - 'playwright.config.ts'
+      - 'package.json'
   pull_request:
     branches: [main]
     paths:
       - 'tests/**'
       - 'docs/**'
       - 'playwright.config.ts'
+      - 'package.json'
 
 jobs:
   test:
@@ -24,8 +26,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
-      - name: Install Playwright
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
       - name: Run tests

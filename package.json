@@ -1,0 +1,8 @@
+{
+  "name": "qa-discovery-poc-tests",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}
