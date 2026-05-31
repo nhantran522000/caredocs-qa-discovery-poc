@@ -1,0 +1,120 @@
+================================================================================
+                    QA DISCOVERY PoC — 30-DAY FAILURE ANALYSIS
+                     ROOT CAUSE & NEXT STEPS (2026-05-31)
+================================================================================
+
+EXECUTIVE SUMMARY
+─────────────────
+After 30 days of investigation, the automated-test-agent's QA discovery system:
+- ✅ WORKS PERFECTLY locally (4/4 precision/recall, 30–60 sec per route, 10–15K tokens)
+- ❌ FAILS on Wolfpack production (timeouts, 200–540K token blow-up, MCP hangs)
+
+ROOT CAUSE (NOT A BUG IN THE SKILL)
+───────────────────────────────────
+The issue is ENVIRONMENTAL + PLATFORM-LEVEL:
+
+1. Wolfpack MCP calls hang intermittently (2–4 min for get_skill, get_wiki_page)
+2. Container has environmental instability (browser egress, resource contention)
+3. Model context grows uncontrollably (12K → 540K+ tokens on same task)
+4. Runs are wildly variable (some complete at 50K, others timeout at 540K)
+
+FIXES ALREADY ATTEMPTED (not sufficient)
+─────────────────────────────────────────
+✅ Fix #1: Serve site locally via file:// (solved browser egress)
+✅ Fix #2: Bail-fast on errors (improved some timeouts)
+✅ Fix #3: Inlined v3 prompt, minimal MCP (reduced 5 calls → 2)
+❌ Result: Still times out, tokens still blow up
+
+CONCLUSION
+──────────
+This is NOT a skill/task design issue — it's a platform/container issue.
+The skill + detection logic are proven. The blocker is Wolfpack infrastructure.
+
+IMMEDIATE NEXT STEPS (THIS WEEK)
+────────────────────────────────
+1. Deploy the debug task (task-discovery-debug.md) to Wolfpack
+   - Tests Login page only
+   - Should complete in < 5 min if healthy
+   - Will show where the hang actually happens
+
+2. Run it with THREE models in parallel:
+   - Kimi K2.5 (current)
+   - Claude Sonnet 4.6 (proven stable)
+   - Claude Opus 4.8 (if budget allows)
+   - See which is reliable on THIS container
+
+3. Add MCP diagnostics:
+   - Log exact timing for each MCP call
+   - Identify if hang is at call-time or model spinning
+
+DECISION TREE (based on debug results)
+──────────────────────────────────────
+IF debug task completes in < 5 min:
+  → Move to model comparison
+  → Switch to best-performing model
+  → Re-enable full 6-route loop
+  → Validate precision/recall
+
+IF debug task times out:
+  → Investigate which step hangs (browser? MCP?)
+  → Consider Path B: split into two tasks (discover + create)
+  → Or Path C: make 6 separate tasks (one per route)
+
+IF tokens balloon even on debug task:
+  → Model thrashing issue
+  → Swap to Sonnet or Opus
+  → Retry
+
+EXPECTED OUTCOME (1–2 weeks)
+────────────────────────────
+- Wolfpack tasks complete reliably (< 5 min per route)
+- Token usage stable (< 50K per route)
+- Precision/recall matches local (4/4)
+- Schedule enabled for ongoing change-detection
+
+ARTIFACTS CREATED
+──────────────────
+1. baselines/*.aria.yaml — v1 ground truth (committed, ready for Wolfpack)
+2. wolfpack/task-discovery-debug.md — minimal test task
+3. INVESTIGATION_ROADMAP.md — detailed Phase 1/2/3 plan
+4. snapshots/*.aria.yaml — local baseline verification (proven 4/4)
+
+FILES TO DEPLOY TO WOLFPACK
+────────────────────────────
+1. Create a NEW task from wolfpack/task-discovery-debug.md
+   → Model: Kimi K2.5 (same as discovery task)
+   → Tools: Bash, Playwright MCP, Work items
+   → Schedule: Manual run only (no automation)
+
+2. (If debug passes) Update existing discovery task with v3 prompt:
+   → Use content from wolfpack/task-discovery-v3-inlined.md
+   → Schedule: Hourly (10 min per route × 6 routes = ~1 hour)
+
+RECOMMENDED LOOP STRATEGY
+─────────────────────────
+To keep momentum and get answers fast, use /loop with this session:
+
+1. Day 1 (Today):
+   - Deploy debug task
+   - Run manually once
+   - Record findings
+
+2. Day 2–3:
+   - If debug task works: model comparison (3 parallel runs)
+   - If hangs: MCP diagnostics + container investigation
+
+3. Week 2:
+   - Apply fix (model swap, task split, or prompt simplification)
+   - Full 6-route validation
+
+4. Week 3:
+   - Baseline run (initialize all pages)
+   - Inject v2 changeset
+   - Measure precision/recall
+
+5. Week 4+:
+   - Enable scheduled runs
+   - Monitor for stability
+   - Iterate if needed
+
+This keeps the investigation moving until we have a working production setup.
