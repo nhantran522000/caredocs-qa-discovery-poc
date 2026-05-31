@@ -8,4 +8,4 @@
     - textbox "Email address"
     - text: Password
     - textbox "Password"
-    - button "Submit"
+    - button "Sign In"

@@ -3,14 +3,11 @@
   - navigation "Main navigation":
     - list:
       - listitem:
-        - link "Dashboard":
-          - /url: dashboard.html
+        - link "Dashboard": /url: dashboard.html
       - listitem:
-        - link "Settings":
-          - /url: settings.html
+        - link "Settings": /url: settings.html
       - listitem:
-        - link "Residents":
-          - /url: residents.html
+        - link "Residents": /url: residents.html
 - main:
   - region "Your profile":
     - heading "Your profile" [level=2]
@@ -18,4 +15,6 @@
     - paragraph: Dana Whitmore
     - text: Email address
     - paragraph: dana.whitmore@bramblewood.example
+    - text: Date of birth
+    - paragraph: 14 March 1981
     - button "Edit"

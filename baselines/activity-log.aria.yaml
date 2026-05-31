@@ -1,0 +1,28 @@
+- banner:
+  - paragraph: BramblewoodCare
+  - navigation "Main navigation":
+    - list:
+      - listitem:
+        - link "Dashboard": /url: dashboard.html
+      - listitem:
+        - link "Profile": /url: profile.html
+      - listitem:
+        - link "Settings": /url: settings.html
+      - listitem:
+        - link "Residents": /url: residents.html
+- main:
+  - region "Activity log":
+    - heading "Activity log" [level=2]
+    - paragraph: Recent actions recorded against your account.
+    - text: Show entries from
+    - combobox "Show entries from": options [Today, This week, This month]
+    - table:
+      - rowgroup:
+        - row "Time Action Resident":
+          - columnheader "Time"
+          - columnheader "Action"
+          - columnheader "Resident"
+      - rowgroup:
+        - row "13:10 Medication administered Arthur Penhale"
+        - row "12:35 Handover note added Maud Selby"
+        - row "11:50 Care plan reviewed Cynthia Roe"
