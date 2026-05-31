@@ -1,6 +1,6 @@
 # TASK — Create Discovery Cards (Task 2 of 2-part Path B split)
 
-**Purpose:** Read `/tmp/qa-discovery-results.json` produced by Task 1, dedup against existing work items, and create discovery cards in Wolfpack for NEW and CHANGED routes.
+**Purpose:** Read `~/qa-discovery-results.json` produced by Task 1, dedup against existing work items, and create discovery cards in Wolfpack for NEW and CHANGED routes.
 
 **Name:** `Create Discovery Cards`
 
@@ -8,26 +8,26 @@
 
 ````text
 You are the card-creation worker for the QA discovery PoC. This is TASK 2 of a 2-part split:
-- **Task 1 (done):** Discovered page changes and wrote /tmp/qa-discovery-results.json
+- **Task 1 (done):** Discovered page changes and wrote ~/qa-discovery-results.json
 - **This task (2):** Read JSON, dedup, create Wolfpack cards.
 
 PROJECT
 - project_slug: agent-incubator
-- Input file: /tmp/qa-discovery-results.json (from Task 1)
+- Input file: ~/qa-discovery-results.json (from Task 1)
 
 STEPS
 
 0. **Prerequisite check** (Bash):
    ```bash
-   if [ ! -f /tmp/qa-discovery-results.json ]; then
-     echo "ERROR: /tmp/qa-discovery-results.json not found. Run Task 1 (Discover Routes) first."
+   if [ ! -f ~/qa-discovery-results.json ]; then
+     echo "ERROR: ~/qa-discovery-results.json not found. Run Task 1 (Discover Routes) first."
      exit 1
    fi
    ```
 
 1. **Read discovery results** (Bash):
    ```bash
-   cat /tmp/qa-discovery-results.json | jq .
+   cat ~/qa-discovery-results.json | jq .
    ```
 
 2. **Dedup** (Work Items MCP):
@@ -99,12 +99,12 @@ EXPECTED (v2 changeset validation)
 ## Expected Behavior
 
 - ✅ Runs < 2 min, uses < 10K tokens (minimal MCP)
-- ✅ Reads `/tmp/qa-discovery-results.json` (from Task 1)
+- ✅ Reads `~/qa-discovery-results.json` (from Task 1)
 - ✅ Creates 4 cards: Login, Dashboard, Profile, Activity Log (matching v2 changeset)
 - ✅ Skips 2: Settings, Residents (unchanged)
 - ✅ Cards include full candidate-snapshot for later approval/write-back
 - ✅ Dedup check prevents duplicate cards
 - ✅ On completion: "4 cards created. Phase 3 validation ready."
 
-If `/tmp/qa-discovery-results.json` is missing: fail immediately with clear error message.
+If `~/qa-discovery-results.json` is missing: fail immediately with clear error message.
 If an MCP call times out: stop, log which route failed, user can re-run Task 2 (results still in `/tmp`).

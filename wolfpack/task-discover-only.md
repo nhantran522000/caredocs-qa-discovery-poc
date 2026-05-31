@@ -1,6 +1,6 @@
 # TASK — Discover Routes (Task 1 of 2-part Path B split)
 
-**Purpose:** Browse all 6 routes of the QA discovery site, diff against baselines, write results to `/tmp/qa-discovery-results.json` for Task 2 to consume. **Zero MCP calls** — only Bash + Playwright.
+**Purpose:** Browse all 6 routes of the QA discovery site, diff against baselines, write results to `~/qa-discovery-results.json` for Task 2 to consume. **Zero MCP calls** — only Bash + Playwright.
 
 **Name:** `Discover Routes`
 
@@ -8,13 +8,13 @@
 
 ````text
 You are discovering page changes in the QA discovery PoC. This is TASK 1 of a 2-part split:
-- **This task (1):** Browse pages, diff, write JSON results to /tmp.
+- **This task (1):** Browse pages, diff, write JSON results to home directory.
 - **Task 2 (later):** Read JSON, call Wolfpack MCP to create cards.
 
 This split eliminates MCP hangs from the discovery phase entirely.
 
 PROJECT & SITE
-- repo_url (PUBLIC): https://github.com/wolf-logic/qa-discovery-poc.git
+- repo_url (PUBLIC): https://github.com/nhantran522000/qa-discovery-poc.git
 - site: /tmp/qa-site/docs/ (files served via file://)
 - routes (IN ORDER):
     1. index.html        | Login         | authentication-access
@@ -30,14 +30,14 @@ STEPS (NO MCP CALLS)
 0. **Setup** (Bash):
    ```bash
    rm -rf /tmp/qa-site
-   git clone --depth 1 https://github.com/wolf-logic/qa-discovery-poc.git /tmp/qa-site
+   git clone --depth 1 https://github.com/nhantran522000/qa-discovery-poc.git /tmp/qa-site
    cd /tmp/qa-site && git log --oneline -1
    ls -la baselines/
    ```
 
 1. **Initialize results file** (Bash):
    ```bash
-   echo "[]" > /tmp/qa-discovery-results.json
+   echo "[]" > ~/qa-discovery-results.json
    ```
 
 2. **Process EACH route** (loop in order above; for each, do steps A–D):
@@ -61,7 +61,7 @@ STEPS (NO MCP CALLS)
 
    **D. Append to JSON** (Bash):
       ```bash
-      # Append entry to /tmp/qa-discovery-results.json
+      # Append entry to ~/qa-discovery-results.json
       # Schema: { slug, feature, name, status, diff_summary, current_aria, proposed_gherkin }
       ```
 
@@ -83,11 +83,11 @@ HARD RULES (prevent token bloat)
 - ONE browser_snapshot per route (no scrolling, no JS, no multiple snapshots)
 - If browser_navigate fails after ≤2 retries → status: `not-deployed`, record error, continue
 - If a baseline file is missing → status: `NEW` (not an error)
-- Write /tmp/qa-discovery-results.json even on partial failure (partial results are useful)
+- Write ~/qa-discovery-results.json even on partial failure (partial results are useful)
 - Total budget: a few minutes and well under 50K tokens (zero MCP calls = zero hangs)
 
 OUTPUT
-- /tmp/qa-discovery-results.json — JSON array of discovery results
+- ~/qa-discovery-results.json — JSON array of discovery results
 - Print summary report to stdout showing each route + status
 - Instruct user: "Task 1 done. Run Task 2 (Create Discovery Cards) to create work items."
 ````
@@ -103,7 +103,7 @@ OUTPUT
 ## Expected Behavior
 
 - ✅ Runs < 5 min, uses < 50K tokens (no MCP hangs)
-- ✅ Writes `/tmp/qa-discovery-results.json` with all 6 routes (even unchanged ones)
+- ✅ Writes `~/qa-discovery-results.json` with all 6 routes (even unchanged ones)
 - ✅ JSON includes full `current_aria` and `proposed_gherkin` for all routes (for Task 2 to draft cards)
 - ✅ Prints summary: each route + status + diff
 - ✅ On completion: "Task 1 done. Run Task 2 next."
