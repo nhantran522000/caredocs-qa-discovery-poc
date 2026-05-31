@@ -8,4 +8,4 @@
     - textbox "Email address"
     - text: Password
     - textbox "Password"
-    - button "Sign In"# test promote Sun May 31 22:42:52 +07 2026
+    - button "Sign In"
